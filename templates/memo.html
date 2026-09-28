@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- 月ナビゲーション -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <a href="{{ url_for('memo', month=prev_month, person=filter_person) }}"
+       class="btn btn-outline-secondary btn-sm">&#9664; 前月</a>
+    <span class="fw-bold">{{ selected_month }}</span>
+    <a href="{{ url_for('memo', month=next_month, person=filter_person) }}"
+       class="btn btn-outline-secondary btn-sm">翌月 &#9654;</a>
+</div>
+
+<!-- 人別サマリー -->
+<div class="card mb-4 shadow-sm border-0 bg-white">
+    <div class="card-body p-3">
+        <h6 class="card-subtitle text-muted mb-2 text-center">{{ selected_month }} の支出サマリー</h6>
+        {% if person_totals %}
+        <div class="row text-center g-1">
+            {% for name, amt in person_totals.items() %}
+            <div class="col border-end">
+                <small class="text-muted d-block" style="font-size:0.7rem;">{{ name }}</small>
+                <span class="fw-bold text-danger" style="font-size:0.9rem;">¥{{ "{:,}".format(amt) }}</span>
+                <small class="text-muted d-block" style="font-size:0.65rem;">
+                    {% if total > 0 %}{{ "%.0f"|format(amt / total * 100) }}%{% endif %}
+                </small>
+            </div>
+            {% endfor %}
+            <div class="col">
+                <small class="text-muted d-block" style="font-size:0.7rem;">合計</small>
+                <span class="fw-bold text-dark" style="font-size:0.9rem;">¥{{ "{:,}".format(total) }}</span>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-muted text-center small mb-0">この月の記録はありません。</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 支出メモ登録フォーム -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white fw-bold py-3">支出を記録する</div>
+    <div class="card-body">
+        <form action="{{ url_for('add_memo') }}" method="POST">
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <input type="hidden" name="filter_person" value="{{ filter_person }}">
+
+            <!-- 名前入力（サジェスト付き） -->
+            <div class="mb-2">
+                <input type="text" name="person_name" class="form-control" placeholder="名前（例: たろう）"
+                       list="name-suggestions" autocomplete="off" required
+                       value="{{ filter_person }}">
+                <datalist id="name-suggestions">
+                    {% for name in recent_names %}
+                    <option value="{{ name }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="mb-2">
+                <input type="text" name="title" class="form-control" placeholder="内容（例: コンビニ、ランチ）" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">¥</span>
+                        <input type="number" name="amount" class="form-control text-end" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <input type="date" name="logged_date" class="form-control"
+                           value="{{ today_str }}">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 fw-bold">記録する</button>
+        </form>
+    </div>
+</div>
+
+<!-- 絞り込み -->
+<div class="d-flex align-items-center mb-3 gap-2">
+    <label class="form-label small fw-semibold text-muted mb-0 text-nowrap">名前で絞り込み:</label>
+    <select class="form-select form-select-sm"
+            onchange="location.href='{{ url_for('memo', month=selected_month) }}&person=' + (this.value || '')">
+        <option value="" {% if not filter_person %}selected{% endif %}>すべて</option>
+        {% for name in recent_names %}
+        <option value="{{ name }}" {% if filter_person == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- 支出一覧 -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-bold py-2 small text-secondary">
+        {{ selected_month }} の支出一覧{% if filter_person %}（{{ filter_person }}）{% endif %}
+    </div>
+    <div class="list-group list-group-flush">
+        {% for log in logs %}
+        <div class="list-group-item px-3 py-2">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="badge bg-primary me-1">{{ log.person_name }}</span>
+                    <span class="fw-bold text-dark">{{ log.title }}</span>
+                    <div class="text-muted small">{{ log.logged_date }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-danger fw-bold">¥{{ "{:,}".format(log.amount) }}</span>
+                    <form action="{{ url_for('delete_memo', log_id=log.id) }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary border-0 text-muted p-1"
+                                onclick="return confirm('削除しますか？');">✕</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4 small">
+            {{ selected_month }} の支出記録はありません。
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

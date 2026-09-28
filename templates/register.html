@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="card shadow-sm mt-4">
+    <div class="card-body p-4">
+        <h4 class="card-title text-center mb-4 fw-bold text-success">新規アカウント作成</h4>
+        
+        <form action="{{ url_for('register') }}" method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label fw-semibold">ユーザー名</label>
+                <input type="text" class="form-control form-control-lg" id="username" name="username" placeholder="例: user1" required autofocus>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold">パスワード</label>
+                <input type="password" class="form-control form-control-lg" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn btn-success btn-lg w-100 fw-bold mb-3">アカウントを登録する</button>
+        </form>
+
+        <hr class="my-3">
+
+        <div class="text-center">
+            <a href="{{ url_for('login') }}" class="text-decoration-none small">すでにアカウントをお持ちの方（ログイン画面へ）</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
